@@ -6,12 +6,12 @@
 //
 
 import UIKit
-
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+import UserNotifications
+class SceneDelegate: UIResponder, UIWindowSceneDelegate,UNUserNotificationCenterDelegate {
 
     var window: UIWindow?
-
-
+    let notificationCentre = UNUserNotificationCenter.current()
+      
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
         // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
@@ -27,6 +27,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {
+        notificationCentre.delegate = self
         // Called when the scene has moved from an inactive state to an active state.
         // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
     }
@@ -39,12 +40,35 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneWillEnterForeground(_ scene: UIScene) {
         // Called as the scene transitions from the background to the foreground.
         // Use this method to undo the changes made on entering the background.
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["My First Notification"])
     }
 
     func sceneDidEnterBackground(_ scene: UIScene) {
-        // Called as the scene transitions from the foreground to the background.
-        // Use this method to save data, release shared resources, and store enough scene-specific state information
-        // to restore the scene back to its current state.
+        let content = UNMutableNotificationContent()
+        content.categoryIdentifier = "My First Notification"
+        content.title = "Let's Catch Up"
+        content.body = "Its been some time you haven't did any activity"
+        content.badge = 1
+        content.sound = UNNotificationSound.default
+        
+        // Setting a trigger time
+        let trigger = UNTimeIntervalNotificationTrigger.init(timeInterval: 5, repeats: false)
+        
+        // creating a request
+        let request = UNNotificationRequest.init(identifier: content.categoryIdentifier, content: content, trigger: trigger)
+        
+        // Adding request to  notification centre
+        notificationCentre.add(request) { (error) in
+                   print("\(String(describing: error?.localizedDescription))")
+               }
+        // Adding Action in notification
+        let action1 = UNNotificationAction.init(identifier: "Snooze", title: "Snooze", options: .foreground)
+        let action2 = UNNotificationAction.init(identifier: "Delete", title: "Delete", options: .destructive)
+        let category = UNNotificationCategory.init(identifier: content.categoryIdentifier, actions: [action1,action2], intentIdentifiers: [], options: [])
+        notificationCentre.setNotificationCategories([category])
+    }
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner , .sound , .badge])
     }
 
 
